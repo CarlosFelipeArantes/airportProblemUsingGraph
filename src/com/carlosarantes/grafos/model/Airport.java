@@ -17,13 +17,17 @@ public class Airport {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
         Airport airport = (Airport) o;
-        return coordinates.equals(airport.coordinates) &&
-                id.equals(airport.id);
+        return id.equals(airport.id);
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(coordinates, id);
+        return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+        return getId();
     }
 
     public Coordinates getCoordinates() {

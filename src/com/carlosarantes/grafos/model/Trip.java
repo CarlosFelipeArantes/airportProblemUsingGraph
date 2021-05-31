@@ -55,6 +55,13 @@ public class Trip {
         return Point2D.distance(x1, y1, x2, y2);
     }
 
+    public boolean tripContainsAirport(Airport airport){
+        if(airportA.equals(airport)|| airportB.equals(airport))
+            return true;
+        else
+            return false;
+    }
+
     public Airport getAirportA() {
         return airportA;
     }

@@ -7,11 +7,12 @@ import java.awt.*;
 import java.awt.geom.Line2D;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class FlightControlMap {
 
     private List<TripIntersection> intersections;
-    private Map<String,Integer> airportOccurrencesMap;
+    private Map<String,Integer> tripOverlapOccurrences;
     private ImagePositionConverter imagePositionConverter;
     private List<Trip> trips;
 
@@ -23,7 +24,7 @@ public class FlightControlMap {
 
         intersections = new ArrayList<>();
 
-        airportOccurrencesMap = new HashMap<>();
+        tripOverlapOccurrences = new HashMap<>();
 
         this.trips.forEach(tripA ->
             trips.forEach(tripB -> {
@@ -61,35 +62,34 @@ public class FlightControlMap {
 
         intersections.forEach(tripIntersection->{
 
-            if(airportOccurrencesMap.containsKey(tripIntersection.getTripA().toString())){
+            if(tripOverlapOccurrences.containsKey(tripIntersection.getTripA().toString())){
 
-                airportOccurrencesMap.replace(
+                tripOverlapOccurrences.replace(
                         tripIntersection.getTripA().toString(),
-                        airportOccurrencesMap.get(tripIntersection.getTripA().toString()),
-                        airportOccurrencesMap.get(tripIntersection.getTripA().toString())+1
+                        tripOverlapOccurrences.get(tripIntersection.getTripA().toString()),
+                        tripOverlapOccurrences.get(tripIntersection.getTripA().toString())+1
                 );
 
             }else{
 
-                airportOccurrencesMap.put(tripIntersection.getTripA().toString(),1);
+                tripOverlapOccurrences.put(tripIntersection.getTripA().toString(),1);
 
             }
 
-            if(airportOccurrencesMap.containsKey(tripIntersection.getTripB().toString())){
+            if(tripOverlapOccurrences.containsKey(tripIntersection.getTripB().toString())){
 
-                airportOccurrencesMap.replace(
+                tripOverlapOccurrences.replace(
                         tripIntersection.getTripB().toString(),
-                        airportOccurrencesMap.get(tripIntersection.getTripB().toString()),
-                        airportOccurrencesMap.get(tripIntersection.getTripB().toString())+1
+                        tripOverlapOccurrences.get(tripIntersection.getTripB().toString()),
+                        tripOverlapOccurrences.get(tripIntersection.getTripB().toString())+1
                 );
 
             }else{
 
-                airportOccurrencesMap.put(tripIntersection.getTripB().toString(),1);
+                tripOverlapOccurrences.put(tripIntersection.getTripB().toString(),1);
             }
 
         });
-        System.out.println();
     }
 
     public void configureFlightHeights() {
@@ -99,6 +99,10 @@ public class FlightControlMap {
                     Trip B = intersection.getTripB();
                 }
         );
+    }
+
+    public List<Trip> getTrips() {
+        return trips;
     }
 
     public static Optional<Point> getIntersectionPoint(double a1, double b1, double a2, double b2) {
@@ -124,5 +128,44 @@ public class FlightControlMap {
     }
 
 
+    private static <K, V extends Comparable<? super V>> Map<K, V> sortByValue(Map<K, V> map) {
+        List<Map.Entry<K, V>> list = new ArrayList<>(map.entrySet());
+        list.sort(Map.Entry.comparingByValue());
 
+        Map<K, V> result = new LinkedHashMap<>();
+        for (Map.Entry<K, V> entry : list) {
+            result.put(entry.getKey(), entry.getValue());
+        }
+
+        return result;
+    }
+
+    public void setFlightsHeights() {
+
+        trips.forEach(trip ->{
+            AtomicBoolean found = new AtomicBoolean(false);
+            tripOverlapOccurrences.forEach((tripString,occurrences)->{
+
+                if(trip.toString().equals(tripString)){
+                    found.set(true);
+                }
+            });
+            if(!found.get()){
+                trip.setFlightHeight(10000);
+            }
+        });
+
+        tripOverlapOccurrences = sortByValue(tripOverlapOccurrences);
+        tripOverlapOccurrences.forEach((tripString,occurrences)->{
+
+            int startingHeight = 10000;
+
+            trips.forEach(trip -> {
+                if(trip.toString().equals(tripString)){
+                    trip.setFlightHeight(10000+occurrences*100);
+                }
+            });
+
+        });
+    }
 }
